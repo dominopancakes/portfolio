@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Pipin' Hot - Final project ETL pipeline deployment bucket for CloudFormation files + Lambda zips
+
+Parameters:
+  TeamName:
+    Type: String
+    Description: Enter your name in format 'first-last' to customise the way your resources are named
+    Default: rory-gilmore
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${TeamName}-deployment-bucket'
+      PublicAccessBlockConfiguration: # do not allow any public access
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      Tags:
+        - Key: Name
+          Value: !Sub '${TeamName}-deployment-bucket'
+
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Sid: "AllowSSLRequestsOnlyBlockHTTP"
+            Action: "s3:*"
+            Principal: "*"
+            Effect: "Deny" # Block if...
+            Resource:
+              - !Sub "arn:aws:s3:::${TeamName}-deployment-bucket"
+              - !Sub "arn:aws:s3:::${TeamName}-deployment-bucket/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: "false" # ...the request is not HTTPS
